@@ -20,7 +20,7 @@ jobs:
         java-version: '8'
         distribution: 'zulu'
         
-    - name: Build with Ant
+    - name: Build LWJGL with Ant
       run: |
         ant generate-all
         ant compile

@@ -1,0 +1,53 @@
+name: Build and upload LWJGL2 for Linux ARM
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-24.04-arm
+    container:
+      image: debian/eol:buster
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up dependencies
+      run: |
+        apt update
+        apt install -y ant wget cmake libxcursor-dev libxxf86vm-dev libxrandr-dev libxcb1-dev libxt-dev 
+
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: '8'
+        distribution: 'zulu'
+
+    - name: Build openal-soft
+      run: |
+        wget https://github.com/kcat/openal-soft/archive/refs/tags/openal-soft-1.15.1.tar.gz
+        tar -xf openal-soft-1.15.1.tar.gz
+        cd openal-soft-openal-soft-1.15.1/build
+        cmake ..
+        make
+        cd ../../
+
+    - name: Build LWJGL with Ant
+      run: |
+        ant generate-all
+        ant compile
+        ant compile_native
+        ant jars
+        cp openal-soft-openal-soft-1.15.1/build/libopenal.so libs/linux
+        cd libs/linux
+        jar -cf lwjgl-platform-2.9.4-nightly-20150209-natives-linux.jar liblwjgl.so libopenal.so 
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Package
+        path: libs/linux/lwjgl-platform-2.9.4-nightly-20150209-natives-linux.jar
