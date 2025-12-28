@@ -1,0 +1,35 @@
+name: Build and upload LWJGL2 for macOS ARM
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        java-version: '8'
+        distribution: 'zulu'
+        
+    - name: Build with Ant
+      run: |
+        ant generate-all
+        ant compile
+        ant compile_native
+        ant jars
+        cd libs/macosx
+        jar -cf lwjgl-platform-2.9.4-nightly-20150209-natives-osx.jar liblwjgl.dylib openal.dylib 
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Package
+        path: libs/macosx/lwjgl-platform-2.9.4-nightly-20150209-natives-osx.jar
